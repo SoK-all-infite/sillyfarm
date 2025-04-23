@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SillyFarm</title>
+    <style>
+        body { 
+            font-family: Arial; 
+            padding: 20px; 
+            background-color: #1a2e1a;
+            color: #FFEB3B; 
+        }
+        .container { display: flex; gap: 20px; flex-wrap: wrap; }
+        .section { 
+            border: 2px solid #4CAF50;
+            padding: 15px; 
+            border-radius: 8px; 
+            min-width: 250px; 
+            background-color: #2d2d2d;
+        }
+        button { 
+            margin: 5px; 
+            padding: 8px 15px; 
+            background-color: #2d5a27;
+            border: 1px solid #4CAF50;
+            color: #FFEB3B; 
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #4CAF50;
+            color: #1a2e1a;
+        }
+        .resource-info { margin: 10px 0; }
+        .uncollected { 
+            color: #FFEB3B;
+            font-size: 0.9em; 
+            opacity: 0.8;
+        }
+        .sell-section { 
+            margin-top: 15px; 
+            padding-top: 15px; 
+            border-top: 2px solid #4CAF50; 
+        }
+        h1, h3, h4 {
+            color: #4CAF50;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🌿 Тёмная Ферма 🌿</h1>
+    <div class="container">
+        <!-- Секция ресурсов и продажи -->
+        <div class="section">
+            <h3>💰 Ресурсы ($<span id="money">15</span>)</h3>
+            <div class="resource-info">
+                🥚 Яйца: <span id="totalEggs">0</span>
+                <div class="uncollected">Не собрано: <span id="uncollectedEggs">0</span></div>
+            </div>
+            <div class="resource-info">
+                🌽 Кукуруза: <span id="totalCorn">0</span>
+                <div class="uncollected">Не собрано: <span id="uncollectedCorn">0</span></div>
+            </div>
+            <div class="resource-info">
+                🍎 Яблоки: <span id="totalApples">0</span>
+                <div class="uncollected">Не собрано: <span id="uncollectedApples">0</span></div>
+            </div>
+            
+            <div class="sell-section">
+                <h4>🛒 Продажа:</h4>
+                <button onclick="sellEggs()">Продать яйца ($0.09/шт)</button>
+                <button onclick="sellCorn()">Продать кукурузу ($0.03/шт)</button>
+                <button onclick="sellApples()">Продать яблоки ($0.27/шт)</button>
+            </div>
+        </div>
+
+        <!-- Секция кур -->
+        <div class="section">
+            <h3>🐔 Куры (<span id="chickenCount">0</span>)</h3>
+            <div>🥚/сек: <span id="eggsPerSecond">0</span></div>
+            <button onclick="buyChicken()">Купить курицу ($<span id="chickenCost">10</span>)</button>
+            <button onclick="collectEggs()">Собрать яйца</button>
+        </div>
+
+        <!-- Секция кукурузы -->
+        <div class="section">
+            <h3>🌽 Кукуруза (<span id="cornPlotCount">0</span>)</h3>
+            <div>✅ Готово: <span id="readyCorn">0</span></div>
+            <button onclick="plantCorn()">Посадить 1 кукурузу</button>
+            <button onclick="collectCorn()">Собрать готовую</button>
+            <hr>
+            <h4>🤖 Автопосадка</h4>
+            <button onclick="buyAutoPlant()">Улучшить ($<span id="autoPlantCost">5</span>)</button>
+            <div>Уровень: <span id="autoPlantLevel">0</span></div>
+        </div>
+
+        <!-- Секция яблонь -->
+        <div class="section">
+            <h3>🍎 Яблони (<span id="appleTreeCount">0</span>)</h3>
+            <div>🍎/сек: <span id="applesPerSecond">0</span></div>
+            <button onclick="buyAppleTree()">Купить яблоню ($<span id="appleTreeCost">100</span>)</button>
+            <button onclick="collectApples()">Собрать яблоки</button>
+        </div>
+    </div>
+
+    <script>
+        let gameData = {
+            money: 15,
+            chickens: [],
+            cornPlots: [],
+            appleTrees: 0,
+            inventory: { eggs: 0, corn: 0, apples: 0 },
+            autoPlant: { level: 0, cost: 5, lastPlant: 0 },
+            lastAppleUpdate: Date.now()
+        };
+
+        // Покупка кур
+        function buyChicken() {
+            const cost = 10 * Math.pow(1.1, gameData.chickens.length);
+            if(gameData.money >= cost) {
+                gameData.money -= cost;
+                gameData.chickens.push({ eggs: 0 });
+                updateDisplay();
+            }
+        }
+
+        // Покупка яблонь
+        function buyAppleTree() {
+            const cost = 100 * Math.pow(1.1, gameData.appleTrees);
+            if(gameData.money >= cost) {
+                gameData.money -= cost;
+                gameData.appleTrees++;
+                updateDisplay();
+            }
+        }
+
+        // Автопосадка кукурузы
+        function buyAutoPlant() {
+            if(gameData.money >= gameData.autoPlant.cost) {
+                gameData.money -= gameData.autoPlant.cost;
+                gameData.autoPlant.level++;
+                gameData.autoPlant.cost *= 1.1;
+                updateDisplay();
+            }
+        }
+
+        // Ручная посадка кукурузы
+        function plantCorn() {
+            gameData.cornPlots.push({ progress: 0, ready: false });
+            updateDisplay();
+        }
+
+        // Сбор ресурсов
+        function collectEggs() {
+            gameData.inventory.eggs += gameData.chickens.reduce((sum, chicken) => sum + Math.floor(chicken.eggs), 0);
+            gameData.chickens.forEach(chicken => chicken.eggs = 0);
+            updateDisplay();
+        }
+
+        function collectCorn() {
+            const ready = gameData.cornPlots.filter(plot => plot.ready).length;
+            gameData.inventory.corn += ready;
+            gameData.cornPlots = gameData.cornPlots.filter(plot => !plot.ready);
+            updateDisplay();
+        }
+
+        function collectApples() {
+            const timePassed = (Date.now() - gameData.lastAppleUpdate) / 1000;
+            gameData.inventory.apples += Math.floor(timePassed * gameData.appleTrees / 10);
+            gameData.lastAppleUpdate = Date.now();
+            updateDisplay();
+        }
+
+        // Продажа ресурсов
+        function sellEggs() {
+            gameData.money += gameData.inventory.eggs * 0.09;
+            gameData.inventory.eggs = 0;
+            updateDisplay();
+        }
+
+        function sellCorn() {
+            gameData.money += gameData.inventory.corn * 0.03;
+            gameData.inventory.corn = 0;
+            updateDisplay();
+        }
+
+        function sellApples() {
+            gameData.money += gameData.inventory.apples * 0.27;
+            gameData.inventory.apples = 0;
+            updateDisplay();
+        }
+
+        // Игровой цикл
+        function gameLoop() {
+            const now = Date.now();
+            const deltaTime = (now - (gameData.lastUpdate || now)) / 1000;
+            gameData.lastUpdate = now;
+
+            // Производство яиц
+            gameData.chickens.forEach(chicken => {
+                chicken.eggs += deltaTime;
+            });
+
+            // Рост кукурузы
+            gameData.cornPlots.forEach(plot => {
+                if(!plot.ready) {
+                    plot.progress = Math.min(plot.progress + deltaTime/5, 1);
+                    plot.ready = plot.progress >= 1;
+                }
+            });
+
+            // Автопосадка
+            if(gameData.autoPlant.level > 0 && now - gameData.autoPlant.lastPlant > 5000) {
+                gameData.cornPlots.push(...Array(gameData.autoPlant.level).fill({ progress: 0, ready: false }));
+                gameData.autoPlant.lastPlant = now;
+            }
+
+            // Производство яблок
+            gameData.inventory.apples += deltaTime * gameData.appleTrees / 10;
+
+            updateDisplay();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Обновление интерфейса
+        function updateDisplay() {
+            // Деньги и инвентарь
+            document.getElementById('money').textContent = Math.floor(gameData.money);
+            document.getElementById('totalEggs').textContent = Math.floor(gameData.inventory.eggs);
+            document.getElementById('totalCorn').textContent = Math.floor(gameData.inventory.corn);
+            document.getElementById('totalApples').textContent = Math.floor(gameData.inventory.apples);
+
+            // Несобранные ресурсы
+            document.getElementById('uncollectedEggs').textContent = Math.floor(
+                gameData.chickens.reduce((sum, chicken) => sum + chicken.eggs, 0)
+            );
+            document.getElementById('uncollectedCorn').textContent = 
+                gameData.cornPlots.filter(plot => plot.ready).length;
+            document.getElementById('uncollectedApples').textContent = Math.floor(
+                (Date.now() - gameData.lastAppleUpdate) / 1000 % 10 * gameData.appleTrees / 10
+            );
+
+            // Куры
+            document.getElementById('chickenCount').textContent = gameData.chickens.length;
+            document.getElementById('eggsPerSecond').textContent = gameData.chickens.length.toFixed(1);
+            document.getElementById('chickenCost').textContent = 
+                Math.floor(10 * Math.pow(1.1, gameData.chickens.length));
+
+            // Кукуруза
+            document.getElementById('cornPlotCount').textContent = gameData.cornPlots.length;
+            document.getElementById('readyCorn').textContent = 
+                gameData.cornPlots.filter(plot => plot.ready).length;
+
+            // Яблони
+            document.getElementById('appleTreeCount').textContent = gameData.appleTrees;
+            document.getElementById('applesPerSecond').textContent = (gameData.appleTrees / 10).toFixed(1);
+            document.getElementById('appleTreeCost').textContent = 
+                Math.floor(100 * Math.pow(1.1, gameData.appleTrees));
+
+            // Автопосадка
+            document.getElementById('autoPlantLevel').textContent = gameData.autoPlant.level;
+            document.getElementById('autoPlantCost').textContent = Math.floor(gameData.autoPlant.cost);
+        }
+
+        // Запуск игры
+        gameLoop();
+    </script>
+</body>
+</html>
