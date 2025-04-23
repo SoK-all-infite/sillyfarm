@@ -109,8 +109,7 @@
         <div>Уровень: <span id="autoSellLevel">0</span></div>
         <div>Продаёт все ресурсы каждые 5 секунд</div>
     </div>
-    </div>
-
+</div>
     <script>
         let gameData = {
             money: 15,
@@ -119,9 +118,9 @@
             appleTrees: 0,
             inventory: { eggs: 0, corn: 0, apples: 0 },
             autoPlant: { level: 0, cost: 5, lastPlant: 0 },
-            lastAppleUpdate: Date.now()}
-            autoSell: { level: 0, cost: 1000, lastSell: 0 }
-        }
+            lastAppleUpdate: Date.now(),
+            autoSell: { level: 0, cost: 10000, lastSell: 0 }
+        };
 
         // Покупка кур
         function buyChicken() {
@@ -179,6 +178,14 @@
             gameData.lastAppleUpdate = Date.now();
             updateDisplay();
         }
+        function buyAutoSell() {
+        if(gameData.money >= gameData.autoSell.cost) {
+        gameData.money -= gameData.autoSell.cost;
+        gameData.autoSell.level++;
+        gameData.autoSell.cost *= 1; // Цена не растёт
+        updateDisplay();
+        }
+        }
 
         // Продажа ресурсов
         function sellEggs() {
@@ -198,20 +205,19 @@
             gameData.inventory.apples = 0;
             updateDisplay();
         }
-        
-        function buyAutoSell() {
-    if(gameData.money >= gameData.autoSell.cost) {
-        gameData.money -= gameData.autoSell.cost;
-        gameData.autoSell.level++;
-        gameData.autoSell.cost *= 1; // Цена не растёт
-        updateDisplay();
-    }
 
         // Игровой цикл
         function gameLoop() {
             const now = Date.now();
             const deltaTime = (now - (gameData.lastUpdate || now)) / 1000;
             gameData.lastUpdate = now;
+ // Автопродажа
+    if(gameData.autoSell.level > 0 && now - gameData.autoSell.lastSell > 5000) {
+        sellEggs();
+        sellCorn();
+        sellApples();
+        gameData.autoSell.lastSell = now;
+    }
 
             // Производство яиц
             gameData.chickens.forEach(chicken => {
@@ -234,13 +240,6 @@
 
             // Производство яблок
             gameData.inventory.apples += deltaTime * gameData.appleTrees / 10;
-
-                if(gameData.autoSell.level > 0 && now - gameData.autoSell.lastSell > 5000) {
-        sellEggs();
-        sellCorn();
-        sellApples();
-        gameData.autoSell.lastSell = now;
-    }
 
             updateDisplay();
             requestAnimationFrame(gameLoop);
@@ -283,10 +282,12 @@
 
             // Автопосадка
             document.getElementById('autoPlantLevel').textContent = gameData.autoPlant.level;
-             // Автопродажа
-    document.getElementById('autoSellCost').textContent = gameData.autoSell.cost;
-    document.getElementById('autoSellLevel').textContent = gameData.autoSell.level;
-        }
+
+            // Автопродажа
+            document.getElementById('autoSellCost').textContent = gameData.autoSell.cost;
+            document.getElementById('autoSellLevel').textContent = gameData.autoSell.level;
+            }
+            }
 
         // Запуск игры
         gameLoop();
