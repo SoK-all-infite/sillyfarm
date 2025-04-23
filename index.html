@@ -120,7 +120,7 @@
             inventory: { eggs: 0, corn: 0, apples: 0 },
             autoPlant: { level: 0, cost: 5, lastPlant: 0 },
             lastAppleUpdate: Date.now()
-            autoSell: { level: 0, cost: 1000, lastSell: 0 },
+            autoSell: { level: 0, cost: 1000, lastSell: 0 }
         };
 
         // Покупка кур
@@ -235,16 +235,16 @@
             // Производство яблок
             gameData.inventory.apples += deltaTime * gameData.appleTrees / 10;
 
-            updateDisplay();
-            requestAnimationFrame(gameLoop);
-        }
-                // Автопродажа
-    if(gameData.autoSell.level > 0 && now - gameData.autoSell.lastSell > 5000) {
+                if(gameData.autoSell.level > 0 && now - gameData.autoSell.lastSell > 5000) {
         sellEggs();
         sellCorn();
         sellApples();
         gameData.autoSell.lastSell = now;
     }
+
+            updateDisplay();
+            requestAnimationFrame(gameLoop);
+        }
 
         // Обновление интерфейса
         function updateDisplay() {
@@ -280,9 +280,12 @@
             document.getElementById('applesPerSecond').textContent = (gameData.appleTrees * 10).toFixed(1);
             document.getElementById('appleTreeCost').textContent = 
                 Math.floor(100 * Math.pow(1.1, gameData.appleTrees));
+
+            // Автопосадка
+            document.getElementById('autoPlantLevel').textContent = gameData.autoPlant.level;
              // Автопродажа
-            document.getElementById('autoSellCost').textContent = gameData.autoSell.cost;
-            document.getElementById('autoSellLevel').textContent = gameData.autoSell.level;
+    document.getElementById('autoSellCost').textContent = gameData.autoSell.cost;
+    document.getElementById('autoSellLevel').textContent = gameData.autoSell.level;
         }
 
         // Запуск игры
