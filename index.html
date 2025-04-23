@@ -253,7 +253,7 @@
 
             // Яблони
             document.getElementById('appleTreeCount').textContent = gameData.appleTrees;
-            document.getElementById('applesPerSecond').textContent = (gameData.appleTrees / 10).toFixed(1);
+            document.getElementById('applesPerSecond').textContent = (gameData.appleTrees * 10).toFixed(1);
             document.getElementById('appleTreeCost').textContent = 
                 Math.floor(100 * Math.pow(1.1, gameData.appleTrees));
 
