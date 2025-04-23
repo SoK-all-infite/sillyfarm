@@ -139,7 +139,7 @@
             if(gameData.money >= gameData.autoPlant.cost) {
                 gameData.money -= gameData.autoPlant.cost;
                 gameData.autoPlant.level++;
-                gameData.autoPlant.cost *= 1.1;
+                gameData.autoPlant.cost *= 1;
                 updateDisplay();
             }
         }
@@ -259,7 +259,6 @@
 
             // Автопосадка
             document.getElementById('autoPlantLevel').textContent = gameData.autoPlant.level;
-            document.getElementById('autoPlantCost').textContent = Math.floor(gameData.autoPlant.cost);
         }
 
         // Запуск игры
