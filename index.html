@@ -101,6 +101,14 @@
             <button onclick="buyAppleTree()">Купить яблоню ($<span id="appleTreeCost">100</span>)</button>
             <button onclick="collectApples()">Собрать яблоки</button>
         </div>
+        <div class="section">
+    <h3>🤖 Автоматизация</h3>
+    <div class="auto-section">
+        <h4>Автопродажа</h4>
+        <button onclick="buyAutoSell()">Купить автопродажу ($<span id="autoSellCost">1000</span>)</button>
+        <div>Уровень: <span id="autoSellLevel">0</span></div>
+        <div>Продаёт все ресурсы каждые 5 секунд</div>
+    </div>
     </div>
 
     <script>
@@ -112,6 +120,7 @@
             inventory: { eggs: 0, corn: 0, apples: 0 },
             autoPlant: { level: 0, cost: 5, lastPlant: 0 },
             lastAppleUpdate: Date.now()
+            autoSell: { level: 0, cost: 10000, lastSell: 0 }
         };
 
         // Покупка кур
@@ -189,6 +198,14 @@
             gameData.inventory.apples = 0;
             updateDisplay();
         }
+        
+        function buyAutoSell() {
+    if(gameData.money >= gameData.autoSell.cost) {
+        gameData.money -= gameData.autoSell.cost;
+        gameData.autoSell.level++;
+        gameData.autoSell.cost *= 1; // Цена не растёт
+        updateDisplay();
+    }
 
         // Игровой цикл
         function gameLoop() {
@@ -221,6 +238,13 @@
             updateDisplay();
             requestAnimationFrame(gameLoop);
         }
+                // Автопродажа
+    if(gameData.autoSell.level > 0 && now - gameData.autoSell.lastSell > 5000) {
+        sellEggs();
+        sellCorn();
+        sellApples();
+        gameData.autoSell.lastSell = now;
+    }
 
         // Обновление интерфейса
         function updateDisplay() {
@@ -259,6 +283,9 @@
 
             // Автопосадка
             document.getElementById('autoPlantLevel').textContent = gameData.autoPlant.level;
+             // Автопродажа
+    document.getElementById('autoSellCost').textContent = gameData.autoSell.cost;
+    document.getElementById('autoSellLevel').textContent = gameData.autoSell.level;
         }
 
         // Запуск игры
